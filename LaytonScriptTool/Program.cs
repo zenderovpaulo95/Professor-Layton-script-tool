@@ -6,30 +6,11 @@ namespace LaytonScriptTool
 	{
 		public static void Main (string[] args)
 		{
-			/*args = new string[2];
-			args[0] = "export";
-			args[1] = "/home/pavel/Рабочий стол/Лэйтон/Распакованный кеш/data-en/script/hotelroom/hotelscript.gds";*/
-
-			/*args = new string[4];
-			args[0] = "replace";
-			args[1] = "/home/pavel/Рабочий стол/Лэйтон/ператка/puzzletitle/texts/original";
-			args[2] = "/home/pavel/Рабочий стол/Лэйтон/ператка/puzzletitle/texts/translate";
-			args[3] = "/home/pavel/Рабочий стол/Лэйтон/ператка/puzzletitle/qtitle.txt";*/
-
-			/*args = new string[4];
-			args[0] = "import";
-			args[1] = "/home/pavel/Рабочий стол/Лэйтон/Распакованный кеш/data-en/script/qinfo/qscript.gds";
-			args[2] = "/home/pavel/Рабочий стол/Лэйтон/Распакованный кеш/data-en/script/qinfo/qscript.txt";
-			args[3] = "/home/pavel/Рабочий стол/Лэйтон/Распакованный кеш/data-en/script/qinfo/test.gds";*/
-
-				
 			if (args.Length == 2 && args [0] == "export") {
 				string InputFile = args [1];
 				string OutputFile = WorkFiles.ReplaceFileName (args [1], ".txt");
 
 				if (OutputFile != null) {
-					//Console.WriteLine("{0}\t{1}", InputFile, OutputFile);
-
 					int result = WorkFiles.ExportFile (InputFile, OutputFile);
 
 					switch (result) {
@@ -55,8 +36,6 @@ namespace LaytonScriptTool
 				if(args.Length == 4) OutputFile = args[3];
 
 				if (OutputFile != null) {
-					//Console.WriteLine("{0}\t{1}", InputFile, OutputFile);
-
 					int result = WorkFiles.ImportFile(InputFile, InputTxtFile, OutputFile);
 
 					switch (result) {
