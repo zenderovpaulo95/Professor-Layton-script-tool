@@ -11,7 +11,7 @@ namespace LaytonScriptTool
 				string OutputFile = WorkFiles.ReplaceFileName (args [1], ".txt");
 
 				if (OutputFile != null) {
-					int result = WorkFiles.ExportFile (InputFile, OutputFile);
+					int result = WorkFiles.ExportFile (InputFile, OutputFile, false, false);
 
 					switch (result) {
 					case -2:
@@ -28,15 +28,37 @@ namespace LaytonScriptTool
 					}
 				} else
 					Console.WriteLine ("Error for make export file name.");
-			} else if ((args.Length == 3 || args.Length == 4) && (args [0] == "import"))
-			{
-				string InputFile = args[1];
-				string InputTxtFile = args[2];
-				string OutputFile = args[1];
-				if(args.Length == 4) OutputFile = args[3];
+			} else if (args.Length == 3 && args [0] == "export" && (args[2] == "ascii" || args[2] == "ASCII")) {
+					string InputFile = args [1];
+					string OutputFile = WorkFiles.ReplaceFileName (args [1], ".txt");
+
+					if (OutputFile != null) {
+						int result = WorkFiles.ExportFile (InputFile, OutputFile, true, false);
+
+						switch (result) {
+						case -2:
+							Console.WriteLine ("File doesn't exists.");
+							break;
+
+						case -1:
+							Console.WriteLine ("Unknown error. Please send me a file.");
+							break;
+
+						default:
+							Console.WriteLine ("File extracted successfully.");
+							break;
+						}
+					} else
+						Console.WriteLine ("Error for make export file name.");
+			} else if ((args.Length == 3 || args.Length == 4) && (args [0] == "import")) {
+				string InputFile = args [1];
+				string InputTxtFile = args [2];
+				string OutputFile = args [1];
+				if (args.Length == 4)
+					OutputFile = args [3];
 
 				if (OutputFile != null) {
-					int result = WorkFiles.ImportFile(InputFile, InputTxtFile, OutputFile);
+					int result = WorkFiles.ImportFile (InputFile, InputTxtFile, OutputFile);
 
 					switch (result) {
 					case -2:
@@ -58,31 +80,51 @@ namespace LaytonScriptTool
 				} else
 					Console.WriteLine ("Error for make import file name.");
 			} else if ((args.Length == 4) && (args [0] == "replace") && (System.IO.Directory.Exists (args [1]) && System.IO.Directory.Exists (args [2]))
-			        && System.IO.File.Exists (args [3]))
-			{
-				string DirectoryOriginal = args[1];
-				string DirectoryTranslate = args[2];
-				string FullFile = args[3];
+			           && System.IO.File.Exists (args [3])) {
+				string DirectoryOriginal = args [1];
+				string DirectoryTranslate = args [2];
+				string FullFile = args [3];
 
-				int result = WorkFiles.replace(DirectoryOriginal, DirectoryTranslate, FullFile);
+				int result = WorkFiles.replace (DirectoryOriginal, DirectoryTranslate, FullFile);
 
-				switch (result)
-				{
+				switch (result) {
 				case -2:
-					Console.WriteLine("Check correctly paths.");
+					Console.WriteLine ("Check correctly paths.");
 					break;
 				case -1:
-					Console.WriteLine("Something wrong. Please send me file");
-						break;
+					Console.WriteLine ("Something wrong. Please send me file");
+					break;
 
 				case 0:
-					Console.WriteLine("File is not modified!");
-						break;
+					Console.WriteLine ("File is not modified!");
+					break;
 
 				case 1:
-					Console.WriteLine("File successfully modified.");
-						break;
+					Console.WriteLine ("File successfully modified.");
+					break;
 				}
+			} else if (args.Length == 2 && args [0] == "debug") {
+				string InputFile = args [1];
+				string OutputFile = WorkFiles.ReplaceFileName (args[1], ".txt");
+
+				if (OutputFile != null) {
+					int result = WorkFiles.ExportFile (InputFile, OutputFile, false, true);
+
+					switch (result) {
+					case -2:
+						Console.WriteLine ("File doesn't exists.");
+						break;
+
+					case -1:
+						Console.WriteLine ("Unknown error. Please send me a file.");
+						break;
+
+					default:
+						Console.WriteLine ("File extracted successfully.");
+						break;
+					}
+				} else
+					Console.WriteLine ("Error for make export file name.");
 			}
 			else 
 			{

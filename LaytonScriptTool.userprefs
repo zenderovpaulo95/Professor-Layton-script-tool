@@ -2,8 +2,8 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
   <MonoDevelop.Ide.Workbench ActiveDocument="LaytonScriptTool/Program.cs">
     <Files>
-      <File FileName="LaytonScriptTool/Program.cs" Line="97" Column="1" />
-      <File FileName="LaytonScriptTool/WorkFiles.cs" Line="178" Column="40" />
+      <File FileName="LaytonScriptTool/Program.cs" Line="5" Column="17" />
+      <File FileName="LaytonScriptTool/WorkFiles.cs" Line="207" Column="37" />
       <File FileName="LaytonScriptTool/ClassesAndStructs.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>

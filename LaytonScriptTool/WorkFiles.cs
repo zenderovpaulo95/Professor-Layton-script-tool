@@ -40,7 +40,7 @@ namespace LaytonScriptTool
 
 				List<ClassesAndStructs.QuestTitle> Data = new List<ClassesAndStructs.QuestTitle>();
 
-				Data = GetData(InFileName);
+				Data = GetData(InFileName, false);
 				if(Data != null)
 				{
 
@@ -203,7 +203,8 @@ namespace LaytonScriptTool
 								ms.Write(tmp, 0, tmp.Length);
 								tmp = BitConverter.GetBytes(Data[i].Unknown34);
 								ms.Write(tmp, 0, tmp.Length);
-								Data[i].Str += "\0";
+								//Data[i].Str = 
+								Data[i].Str += new_strs[i] + "\0";
 								if(Data[i].Str.Contains("\\n")) Data[i].Str = Data[i].Str.Replace("\\n", "\n");
 								else if(Data[i].Str.Contains("/n")) Data[i].Str = Data[i].Str.Replace("/n", "\n");
 								tmp = Encoding.UTF8.GetBytes(Data[i].Str);
@@ -261,7 +262,7 @@ namespace LaytonScriptTool
 			}
 		}
 
-		public static List<ClassesAndStructs.QuestTitle> GetData(string InFileName)
+		public static List<ClassesAndStructs.QuestTitle> GetData(string InFileName, bool ascii)
 		{
 			FileStream fs = new FileStream(InFileName, FileMode.Open);
 			BinaryReader br = new BinaryReader(fs);
@@ -325,6 +326,7 @@ namespace LaytonScriptTool
 					qt[i].Str_size = br.ReadInt16();
 					tmp = br.ReadBytes(qt[i].Str_size);
 					qt[i].Str = Encoding.UTF8.GetString(tmp);
+					if(ascii) qt[i].Str = Encoding.ASCII.GetString(tmp);
 					qt[i].Str = qt[i].Str.Remove(qt[i].Str.Length - 1, 1);
 					if(qt[i].Str.Contains("\n")) qt[i].Str = qt[i].Str.Replace("\n", "\\n");
 					if(qt[i].Unknown2 == 0xCA || qt[i].Unknown2 == 0xCB)
@@ -391,7 +393,7 @@ namespace LaytonScriptTool
 		}
 
 
-		public static int ExportFile(string InFileName, string OutFileName)
+		public static int ExportFile(string InFileName, string OutFileName, bool ascii, bool Debug)
 		{
 			if(!File.Exists(InFileName)) return -2;
 
@@ -399,7 +401,7 @@ namespace LaytonScriptTool
 			{
 				List<ClassesAndStructs.QuestTitle> Data = new List<ClassesAndStructs.QuestTitle>();
 
-				Data = GetData(InFileName);
+				Data = GetData(InFileName, ascii);
 				if(Data != null)
 				{
 				string result = "";
@@ -407,6 +409,22 @@ namespace LaytonScriptTool
 				for(int i = 0; i < Data.Count; i++)
 				{
 					result += Data[i].Str;
+						if(Debug) { 
+							result += "\t" + Data[i].Str_size + " " + Data[i].Unknown1 + " " + Data[i].Unknown2 + " " + Data[i].Unknown3;
+							result +=  " " + Data[i].Unknown4 + " " + Data[i].Unknown5 + " " + Data[i].Unknown6;
+							result +=  " " + Data[i].Unknown7 + " " + Data[i].Unknown8 + " " + Data[i].Unknown9;
+							result +=  " " + Data[i].Unknown10 + " " + Data[i].Unknown11 + " " + Data[i].Unknown12;
+							result +=  " " + Data[i].Unknown13 + " " + Data[i].Unknown14 + " " + Data[i].Unknown15;
+							result +=  " " + Data[i].Unknown16 + " " + Data[i].Unknown17 + " " + Data[i].Unknown18;
+							result +=  " " + Data[i].Unknown19 + " " + Data[i].Unknown20 + " " + Data[i].Unknown21;
+							result +=  " " + Data[i].Unknown22 + " " + Data[i].Unknown23 + " " + Data[i].Unknown24;
+							result +=  " " + Data[i].Unknown25 + " " + Data[i].Unknown26 + " " + Data[i].Unknown27;
+							result +=  " " + Data[i].Unknown28 + " " + Data[i].Unknown29 + " " + Data[i].Unknown30;
+							result +=  " " + Data[i].Unknown31 + " " + Data[i].Unknown32 + " " + Data[i].Unknown33;
+							result +=  " " + Data[i].Unknown34 + " " + Data[i].Unknown35 + " " + Data[i].Unknown36;
+							result +=  " " + Data[i].Unknown37 + " " + Data[i].Unknown38 + " " + Data[i].Unknown39;
+							result +=  " " + Data[i].Unknown40;
+						}
 					if(i + 1 < Data.Count) result += "\r\n";
 				}
 
