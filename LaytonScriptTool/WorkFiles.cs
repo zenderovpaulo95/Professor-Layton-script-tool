@@ -203,8 +203,7 @@ namespace LaytonScriptTool
 								ms.Write(tmp, 0, tmp.Length);
 								tmp = BitConverter.GetBytes(Data[i].Unknown34);
 								ms.Write(tmp, 0, tmp.Length);
-								//Data[i].Str = 
-								Data[i].Str += new_strs[i] + "\0";
+								Data[i].Str = new_strs[i] + "\0";
 								if(Data[i].Str.Contains("\\n")) Data[i].Str = Data[i].Str.Replace("\\n", "\n");
 								else if(Data[i].Str.Contains("/n")) Data[i].Str = Data[i].Str.Replace("/n", "\n");
 								tmp = Encoding.UTF8.GetBytes(Data[i].Str);
