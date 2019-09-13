@@ -4,6 +4,39 @@ namespace LaytonScriptTool
 {
 	public class ClassesAndStructs
 	{
+		public class dat_struct
+		{
+			public int index;
+			public byte[] bin_title; //72 bytes default length
+			public string title;
+			public short unknown1; //some data which I don't know
+			public short unknown2;
+			public short unknown3;
+			public short unknown4;
+			public short unknown5;
+			public short unknown6;
+			public int q_offset; //Question's offset
+			public int c_offset; //Correct answer's offset
+			public int w_offset; //Wrong answer's offset
+			public int s1_offset; //Offset of solution 1
+			public int s2_offset; //Offset of solution 2
+			public int s3_offset; //Offset of solution 3
+			public byte[] bin_question;
+			public byte[] bin_correct;
+			public byte[] bin_wrong;
+			public byte[] bin_solution1;
+			public byte[] bin_solution2;
+			public byte[] bin_solution3;
+			public string question;
+			public string correct;
+			public string wrong;
+			public string solution1;
+			public string solution2;
+			public string solution3;
+
+			public dat_struct(){}
+		}
+
 		public class QuestTitle
 		{
 			public short Unknown1;

@@ -7,6 +7,24 @@ namespace LaytonScriptTool
 {
 	public class WorkFiles
 	{
+        public static string MassiveToString(string[] strs)
+        {
+            string tmp = "";
+
+            for(int i = 0; i < strs.Length; i++)
+            {
+                tmp += strs[i];
+                if (i + 1 < strs.Length) tmp += "\r\n";
+            }
+
+            return tmp;
+        }
+        private static int pad(int size)
+        {
+            while (size % 2 != 0) size++;
+
+            return size;
+        }
 		public static string ReplaceFileName(string FileName, string extension)
 		{
 			string tmp = FileName;
@@ -391,6 +409,205 @@ namespace LaytonScriptTool
 			}
 		}
 
+        //Пересылаем dat файл и список доступных текстовых файлов. Если какого-то текстового файла нет, значит, будет считаться пустая строка.
+        public static int ImportDatFile(string InFileName, string[] TxtStrings)
+        {
+            if (!File.Exists(InFileName)) return -2;
+
+            try
+            {
+                FileStream fs = new FileStream(InFileName, FileMode.Open);
+                BinaryReader br = new BinaryReader(fs);
+                ClassesAndStructs.dat_struct dat = new ClassesAndStructs.dat_struct();
+
+                int file_size = (int)fs.Length;
+
+                dat.index = br.ReadInt32();
+                dat.bin_title = br.ReadBytes(72);
+                dat.title = Encoding.UTF8.GetString(dat.bin_title).Replace("\0", string.Empty);
+                dat.unknown1 = br.ReadInt16();
+                dat.unknown2 = br.ReadInt16();
+                dat.unknown3 = br.ReadInt16();
+                dat.unknown4 = br.ReadInt16();
+                dat.unknown5 = br.ReadInt16();
+                dat.unknown6 = br.ReadInt16();
+                dat.q_offset = br.ReadInt32();
+                dat.c_offset = br.ReadInt32();
+                dat.w_offset = br.ReadInt32();
+                dat.s1_offset = br.ReadInt32();
+                dat.s2_offset = br.ReadInt32();
+                dat.s3_offset = br.ReadInt32();
+                dat.bin_question = br.ReadBytes(dat.c_offset - dat.q_offset);
+                dat.bin_correct = br.ReadBytes(dat.w_offset - dat.c_offset);
+                dat.bin_wrong = br.ReadBytes(dat.s1_offset - dat.w_offset);
+                dat.bin_solution1 = br.ReadBytes(dat.s2_offset - dat.s1_offset);
+                dat.bin_solution2 = br.ReadBytes(dat.s3_offset - dat.s2_offset);
+                dat.bin_solution3 = br.ReadBytes(file_size - dat.s3_offset);
+                dat.question = Encoding.UTF8.GetString(dat.bin_question).Replace("\0", string.Empty);
+                dat.correct = Encoding.UTF8.GetString(dat.bin_correct).Replace("\0", string.Empty);
+                dat.wrong = Encoding.UTF8.GetString(dat.bin_wrong).Replace("\0", string.Empty);
+                dat.solution1 = Encoding.UTF8.GetString(dat.bin_solution1).Replace("\0", string.Empty);
+                dat.solution2 = Encoding.UTF8.GetString(dat.bin_solution2).Replace("\0", string.Empty);
+                dat.solution3 = Encoding.UTF8.GetString(dat.bin_solution3).Replace("\0", string.Empty);
+
+                br.Close();
+                fs.Close();
+
+                byte[] tmp; //Временная переменная для записей
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[0] + "\0");
+                if (tmp.Length >= 72) return 2; //Сообщим, что длина строки слишком длинная для заголовка
+                dat.title = TxtStrings[0] + "\0";
+                dat.bin_title = new byte[72];
+                Array.Copy(tmp, 0, dat.bin_title, 0, tmp.Length);
+                int offset = dat.q_offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[1] + "\0");
+                if (offset + tmp.Length >= file_size) return 3;
+                dat.question = TxtStrings[1] + "\0";
+                dat.bin_question = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_question, 0, tmp.Length);
+                offset += dat.bin_question.Length;
+                dat.c_offset = offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[2] + "\0");
+                if (offset + tmp.Length >= file_size) return 4;
+                dat.correct = TxtStrings[2] + "\0";
+                dat.bin_correct = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_correct, 0, tmp.Length);
+                offset += dat.bin_correct.Length;
+                dat.w_offset = offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[3] + "\0");
+                if (offset + tmp.Length >= file_size) return 5;
+                dat.wrong = TxtStrings[3] + "\0";
+                dat.bin_wrong = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_wrong, 0, tmp.Length);
+                offset += dat.bin_wrong.Length;
+                dat.s1_offset = offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[4] + "\0");
+                if (offset + tmp.Length >= file_size) return 6;
+                dat.solution1 = TxtStrings[4] + "\0";
+                dat.bin_solution1 = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_solution1, 0, tmp.Length);
+                offset += dat.bin_solution1.Length;
+                dat.s2_offset = offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[5] + "\0");
+                if (offset + tmp.Length >= file_size) return 7;
+                dat.solution2 = TxtStrings[5] + "\0";
+                dat.bin_solution2 = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_solution2, 0, tmp.Length);
+                offset += dat.bin_solution2.Length;
+                dat.s3_offset = offset;
+
+                tmp = Encoding.UTF8.GetBytes(TxtStrings[6] + "\0");
+                if (offset + tmp.Length >= file_size) return 8;
+                dat.solution3 = TxtStrings[6] + "\0";
+                dat.bin_solution3 = new byte[pad(tmp.Length)];
+                Array.Copy(tmp, 0, dat.bin_solution3, 0, tmp.Length);
+                offset += dat.bin_solution3.Length;
+
+                if (offset >= file_size) return 9; //Вернёт с сообщение о слишком длинном блоке с задачами.
+
+                if (File.Exists(InFileName)) File.Delete(InFileName);
+
+                fs = new FileStream(InFileName, FileMode.CreateNew);
+                BinaryWriter bw = new BinaryWriter(fs);
+                bw.Write(dat.index);
+                bw.Write(dat.bin_title);
+                bw.Write(dat.unknown1);
+                bw.Write(dat.unknown2);
+                bw.Write(dat.unknown3);
+                bw.Write(dat.unknown4);
+                bw.Write(dat.unknown5);
+                bw.Write(dat.unknown6);
+                bw.Write(dat.q_offset);
+                bw.Write(dat.c_offset);
+                bw.Write(dat.w_offset);
+                bw.Write(dat.s1_offset);
+                bw.Write(dat.s2_offset);
+                bw.Write(dat.s3_offset);
+                bw.Write(dat.bin_question);
+                bw.Write(dat.bin_correct);
+                bw.Write(dat.bin_wrong);
+                bw.Write(dat.bin_solution1);
+                bw.Write(dat.bin_solution2);
+                bw.Write(dat.bin_solution3);
+                tmp = new byte[file_size - offset];
+                bw.Write(tmp);
+                bw.Close();
+                fs.Close();
+
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return -1;
+            }
+
+        }
+
+		public static int ExportDatFile(string InFileName)
+		{
+			if (!File.Exists (InFileName)) return -2;
+
+			try
+			{
+				FileStream fs = new FileStream(InFileName, FileMode.Open);
+				BinaryReader br = new BinaryReader(fs);
+				ClassesAndStructs.dat_struct dat = new ClassesAndStructs.dat_struct();
+
+				int file_size = (int)fs.Length;
+
+				dat.index         = br.ReadInt32();
+				dat.bin_title     = br.ReadBytes(72);
+				dat.title         = Encoding.UTF8.GetString(dat.bin_title).Replace("\0", string.Empty);
+				dat.unknown1      = br.ReadInt16();
+				dat.unknown2      = br.ReadInt16();
+				dat.unknown3      = br.ReadInt16();
+				dat.unknown4      = br.ReadInt16();
+				dat.unknown5      = br.ReadInt16();
+				dat.unknown6      = br.ReadInt16();
+				dat.q_offset      = br.ReadInt32();
+				dat.c_offset      = br.ReadInt32();
+				dat.w_offset      = br.ReadInt32();
+				dat.s1_offset     = br.ReadInt32();
+				dat.s2_offset     = br.ReadInt32();
+				dat.s3_offset     = br.ReadInt32();
+				dat.bin_question  = br.ReadBytes(dat.c_offset - dat.q_offset);
+				dat.bin_correct   = br.ReadBytes(dat.w_offset - dat.c_offset);
+				dat.bin_wrong     = br.ReadBytes(dat.s1_offset - dat.w_offset);
+				dat.bin_solution1 = br.ReadBytes(dat.s2_offset - dat.s1_offset);
+				dat.bin_solution2 = br.ReadBytes(dat.s3_offset - dat.s2_offset);
+				dat.bin_solution3 = br.ReadBytes(file_size - dat.s3_offset);
+				dat.question      = Encoding.UTF8.GetString(dat.bin_question).Replace("\0", string.Empty);
+				dat.correct       = Encoding.UTF8.GetString(dat.bin_correct).Replace("\0", string.Empty);
+				dat.wrong         = Encoding.UTF8.GetString(dat.bin_wrong).Replace("\0", string.Empty);
+				dat.solution1     = Encoding.UTF8.GetString(dat.bin_solution1).Replace("\0", string.Empty);
+				dat.solution2     = Encoding.UTF8.GetString(dat.bin_solution2).Replace("\0", string.Empty);
+				dat.solution3     = Encoding.UTF8.GetString(dat.bin_solution3).Replace("\0", string.Empty);
+
+				br.Close();
+				fs.Close();
+
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_title.txt", dat.title);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_question.txt", dat.question);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_correct.txt", dat.correct);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_wrong.txt", dat.wrong);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution1.txt", dat.solution1);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution2.txt", dat.solution2);
+				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution3.txt", dat.solution3);
+
+				return 1;
+			}
+			catch(Exception ex) 
+			{
+				Console.WriteLine(ex.Message);
+				return -1;
+			}
+		}
 
 		public static int ExportFile(string InFileName, string OutFileName, bool ascii, bool Debug)
 		{

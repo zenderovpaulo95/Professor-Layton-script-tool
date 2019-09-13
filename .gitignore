@@ -3,3 +3,5 @@
 ################################################################################
 
 /LaytonScriptTool/obj/x86/Debug
+/.vs/LaytonScriptTool/v16/Server/sqlite3
+/LaytonScriptTool/bin/Debug
