@@ -7,7 +7,9 @@ namespace LaytonScriptTool
 		public class dat_struct
 		{
 			public int index;
-			public byte[] bin_title; //72 bytes default length
+			public short indexNDS;
+			public short offsetNDS;
+			public byte[] bin_title; //72 bytes default length and 48 bytes for Nintendo DS
 			public string title;
 			public short unknown1; //some data which I don't know
 			public short unknown2;

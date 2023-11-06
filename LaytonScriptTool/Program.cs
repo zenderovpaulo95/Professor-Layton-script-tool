@@ -50,8 +50,13 @@ namespace LaytonScriptTool
 					}
 				} else
 					Console.WriteLine ("Error for make export file name.");
-			} else if (args.Length == 3 && args [0] == "export" && args [1] == "datfile") {
-				int result = WorkFiles.ExportDatFile (args [2]);
+			} else if ((args.Length == 3 && args [0] == "export" && args [1] == "datfile")
+				|| (args.Length == 4 && args[0] == "export" && args[1] == "datfile" && args[2] == "NDS")) {
+				bool isNDS = args.Length == 4 && args [2] == "NDS" ? true : false;
+
+				string path = isNDS ? args [3] : args [2];
+
+				int result = WorkFiles.ExportDatFile (path, isNDS);
 
 				switch (result) {
 				case -2:
@@ -67,9 +72,11 @@ namespace LaytonScriptTool
 					break;
 				}
 
-			} else if(args.Length == 3 && args[0] == "import" && args[1] == "datfile")
+			} else if((args.Length == 3 && args[0] == "import" && args[1] == "datfile") ||
+				(args.Length == 4 && args[0] == "import" && args[1] == "datfile" && args[2] == "NDS"))
             {
-                string InputFile = args[2]; //Dat-файл
+				bool isNDS = args.Length == 4 && args [2] == "NDS";
+				string InputFile = isNDS ? args[3] : args[2]; //Dat file
                 string[] strings = new string[7];
 
                 string FileName = InputFile.Remove(InputFile.Length - 4, 4);
@@ -113,7 +120,7 @@ namespace LaytonScriptTool
                         strings[6] = WorkFiles.MassiveToString(tmp_strs);
                     }
 
-                    int result = WorkFiles.ImportDatFile(InputFile, strings);
+                    int result = WorkFiles.ImportDatFile(InputFile, strings, isNDS);
 
                     switch(result)
                     {

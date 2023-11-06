@@ -409,59 +409,86 @@ namespace LaytonScriptTool
 			}
 		}
 
+		public static ClassesAndStructs.dat_struct ReadFile(string InFileName, bool isNDS)
+		{
+			FileStream fs = new FileStream(InFileName, FileMode.Open);
+			BinaryReader br = new BinaryReader(fs);
+			ClassesAndStructs.dat_struct dat = new ClassesAndStructs.dat_struct();
+
+			int file_size = (int)fs.Length;
+
+			if(!isNDS)
+			{
+				dat.index         = br.ReadInt32();
+				dat.indexNDS = -1;
+				dat.offsetNDS = -1;
+			}
+			else
+			{
+				dat.index = -1;
+				dat.indexNDS = br.ReadInt16();
+				dat.offsetNDS = br.ReadInt16();
+			}
+
+			int title_size = isNDS ? 48 : 72;
+
+			dat.bin_title     = br.ReadBytes(title_size);
+			dat.title         = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_title).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_title).Replace("\0", string.Empty);
+			dat.unknown1      = br.ReadInt16();
+			dat.unknown2      = br.ReadInt16();
+			dat.unknown3      = br.ReadInt16();
+			dat.unknown4      = br.ReadInt16();
+			dat.unknown5      = br.ReadInt16();
+			dat.unknown6      = br.ReadInt16();
+			dat.q_offset      = br.ReadInt32();
+			dat.c_offset      = br.ReadInt32();
+			dat.w_offset      = br.ReadInt32();
+			dat.s1_offset     = br.ReadInt32();
+			dat.s2_offset     = br.ReadInt32();
+			dat.s3_offset     = br.ReadInt32();
+			if (isNDS) br.BaseStream.Seek(dat.offsetNDS, SeekOrigin.Begin);
+			dat.bin_question  = br.ReadBytes(dat.c_offset - dat.q_offset);
+			dat.bin_correct   = br.ReadBytes(dat.w_offset - dat.c_offset);
+			dat.bin_wrong     = br.ReadBytes(dat.s1_offset - dat.w_offset);
+			dat.bin_solution1 = br.ReadBytes(dat.s2_offset - dat.s1_offset);
+			dat.bin_solution2 = br.ReadBytes(dat.s3_offset - dat.s2_offset);
+			dat.bin_solution3 = br.ReadBytes(file_size - dat.s3_offset);
+			dat.question      = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_question).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_question).Replace("\0", string.Empty);
+			dat.correct       = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_correct).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_correct).Replace("\0", string.Empty);
+			dat.wrong         = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_wrong).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_wrong).Replace("\0", string.Empty);
+			dat.solution1     = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_solution1).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_solution1).Replace("\0", string.Empty);
+			dat.solution2     = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_solution2).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_solution2).Replace("\0", string.Empty);
+			dat.solution3     = isNDS ? Encoding.GetEncoding(1251).GetString(dat.bin_solution3).Replace("\0", string.Empty) : Encoding.UTF8.GetString(dat.bin_solution3).Replace("\0", string.Empty);
+
+			br.Close();
+			fs.Close();
+
+			return dat;
+		}
+
         //Пересылаем dat файл и список доступных текстовых файлов. Если какого-то текстового файла нет, значит, будет считаться пустая строка.
-        public static int ImportDatFile(string InFileName, string[] TxtStrings)
+		public static int ImportDatFile(string InFileName, string[] TxtStrings, bool isNDS)
         {
             if (!File.Exists(InFileName)) return -2;
 
             try
             {
-                FileStream fs = new FileStream(InFileName, FileMode.Open);
-                BinaryReader br = new BinaryReader(fs);
-                ClassesAndStructs.dat_struct dat = new ClassesAndStructs.dat_struct();
+				ClassesAndStructs.dat_struct dat = ReadFile(InFileName, isNDS);
 
-                int file_size = (int)fs.Length;
-
-                dat.index = br.ReadInt32();
-                dat.bin_title = br.ReadBytes(72);
-                dat.title = Encoding.UTF8.GetString(dat.bin_title).Replace("\0", string.Empty);
-                dat.unknown1 = br.ReadInt16();
-                dat.unknown2 = br.ReadInt16();
-                dat.unknown3 = br.ReadInt16();
-                dat.unknown4 = br.ReadInt16();
-                dat.unknown5 = br.ReadInt16();
-                dat.unknown6 = br.ReadInt16();
-                dat.q_offset = br.ReadInt32();
-                dat.c_offset = br.ReadInt32();
-                dat.w_offset = br.ReadInt32();
-                dat.s1_offset = br.ReadInt32();
-                dat.s2_offset = br.ReadInt32();
-                dat.s3_offset = br.ReadInt32();
-                dat.bin_question = br.ReadBytes(dat.c_offset - dat.q_offset);
-                dat.bin_correct = br.ReadBytes(dat.w_offset - dat.c_offset);
-                dat.bin_wrong = br.ReadBytes(dat.s1_offset - dat.w_offset);
-                dat.bin_solution1 = br.ReadBytes(dat.s2_offset - dat.s1_offset);
-                dat.bin_solution2 = br.ReadBytes(dat.s3_offset - dat.s2_offset);
-                dat.bin_solution3 = br.ReadBytes(file_size - dat.s3_offset);
-                dat.question = Encoding.UTF8.GetString(dat.bin_question).Replace("\0", string.Empty);
-                dat.correct = Encoding.UTF8.GetString(dat.bin_correct).Replace("\0", string.Empty);
-                dat.wrong = Encoding.UTF8.GetString(dat.bin_wrong).Replace("\0", string.Empty);
-                dat.solution1 = Encoding.UTF8.GetString(dat.bin_solution1).Replace("\0", string.Empty);
-                dat.solution2 = Encoding.UTF8.GetString(dat.bin_solution2).Replace("\0", string.Empty);
-                dat.solution3 = Encoding.UTF8.GetString(dat.bin_solution3).Replace("\0", string.Empty);
-
-                br.Close();
-                fs.Close();
+				FileInfo fi = new FileInfo(InFileName);
+				int file_size = (int)fi.Length;
 
                 byte[] tmp; //Временная переменная для записей
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[0] + "\0");
-                if (tmp.Length >= 72) return 2; //Сообщим, что длина строки слишком длинная для заголовка
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[0] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[0] + "\0");
+                if (!isNDS && tmp.Length >= 72) return 2; //Show error about to long title name length
+				else if (isNDS && tmp.Length >= 48) return 2; //This message for Nintendo DS version
                 dat.title = TxtStrings[0] + "\0";
                 dat.bin_title = new byte[72];
+				if (isNDS) dat.bin_title = new byte[48];
                 Array.Copy(tmp, 0, dat.bin_title, 0, tmp.Length);
                 int offset = dat.q_offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[1] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[1] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[1] + "\0");
                 if (offset + tmp.Length >= file_size) return 3;
                 dat.question = TxtStrings[1] + "\0";
                 dat.bin_question = new byte[pad(tmp.Length)];
@@ -469,7 +496,7 @@ namespace LaytonScriptTool
                 offset += dat.bin_question.Length;
                 dat.c_offset = offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[2] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[2] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[2] + "\0");
                 if (offset + tmp.Length >= file_size) return 4;
                 dat.correct = TxtStrings[2] + "\0";
                 dat.bin_correct = new byte[pad(tmp.Length)];
@@ -477,7 +504,7 @@ namespace LaytonScriptTool
                 offset += dat.bin_correct.Length;
                 dat.w_offset = offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[3] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[3] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[3] + "\0");
                 if (offset + tmp.Length >= file_size) return 5;
                 dat.wrong = TxtStrings[3] + "\0";
                 dat.bin_wrong = new byte[pad(tmp.Length)];
@@ -485,7 +512,7 @@ namespace LaytonScriptTool
                 offset += dat.bin_wrong.Length;
                 dat.s1_offset = offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[4] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[4] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[4] + "\0");
                 if (offset + tmp.Length >= file_size) return 6;
                 dat.solution1 = TxtStrings[4] + "\0";
                 dat.bin_solution1 = new byte[pad(tmp.Length)];
@@ -493,7 +520,7 @@ namespace LaytonScriptTool
                 offset += dat.bin_solution1.Length;
                 dat.s2_offset = offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[5] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[5] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[5] + "\0");
                 if (offset + tmp.Length >= file_size) return 7;
                 dat.solution2 = TxtStrings[5] + "\0";
                 dat.bin_solution2 = new byte[pad(tmp.Length)];
@@ -501,7 +528,7 @@ namespace LaytonScriptTool
                 offset += dat.bin_solution2.Length;
                 dat.s3_offset = offset;
 
-                tmp = Encoding.UTF8.GetBytes(TxtStrings[6] + "\0");
+				tmp = isNDS ? Encoding.GetEncoding(1251).GetBytes(TxtStrings[6] + "\0") : Encoding.UTF8.GetBytes(TxtStrings[6] + "\0");
                 if (offset + tmp.Length >= file_size) return 8;
                 dat.solution3 = TxtStrings[6] + "\0";
                 dat.bin_solution3 = new byte[pad(tmp.Length)];
@@ -512,9 +539,14 @@ namespace LaytonScriptTool
 
                 if (File.Exists(InFileName)) File.Delete(InFileName);
 
-                fs = new FileStream(InFileName, FileMode.CreateNew);
+                FileStream fs = new FileStream(InFileName, FileMode.CreateNew);
                 BinaryWriter bw = new BinaryWriter(fs);
-                bw.Write(dat.index);
+				if(!isNDS) bw.Write(dat.index);
+				else
+				{
+					bw.Write(dat.indexNDS);
+					bw.Write(dat.offsetNDS);
+				}
                 bw.Write(dat.bin_title);
                 bw.Write(dat.unknown1);
                 bw.Write(dat.unknown2);
@@ -528,6 +560,12 @@ namespace LaytonScriptTool
                 bw.Write(dat.s1_offset);
                 bw.Write(dat.s2_offset);
                 bw.Write(dat.s3_offset);
+				if (isNDS)
+				{
+					int tmpOff = (int)bw.BaseStream.Position;
+					tmp = new byte[dat.offsetNDS - tmpOff];
+					bw.Write(tmp);
+				}
                 bw.Write(dat.bin_question);
                 bw.Write(dat.bin_correct);
                 bw.Write(dat.bin_wrong);
@@ -549,56 +587,22 @@ namespace LaytonScriptTool
 
         }
 
-		public static int ExportDatFile(string InFileName)
+		public static int ExportDatFile(string InFileName, bool isNDS)
 		{
 			if (!File.Exists (InFileName)) return -2;
 
 			try
 			{
-				FileStream fs = new FileStream(InFileName, FileMode.Open);
-				BinaryReader br = new BinaryReader(fs);
-				ClassesAndStructs.dat_struct dat = new ClassesAndStructs.dat_struct();
+				ClassesAndStructs.dat_struct dat = ReadFile(InFileName, isNDS);
+				FileInfo fi = new FileInfo(InFileName);
 
-				int file_size = (int)fs.Length;
-
-				dat.index         = br.ReadInt32();
-				dat.bin_title     = br.ReadBytes(72);
-				dat.title         = Encoding.UTF8.GetString(dat.bin_title).Replace("\0", string.Empty);
-				dat.unknown1      = br.ReadInt16();
-				dat.unknown2      = br.ReadInt16();
-				dat.unknown3      = br.ReadInt16();
-				dat.unknown4      = br.ReadInt16();
-				dat.unknown5      = br.ReadInt16();
-				dat.unknown6      = br.ReadInt16();
-				dat.q_offset      = br.ReadInt32();
-				dat.c_offset      = br.ReadInt32();
-				dat.w_offset      = br.ReadInt32();
-				dat.s1_offset     = br.ReadInt32();
-				dat.s2_offset     = br.ReadInt32();
-				dat.s3_offset     = br.ReadInt32();
-				dat.bin_question  = br.ReadBytes(dat.c_offset - dat.q_offset);
-				dat.bin_correct   = br.ReadBytes(dat.w_offset - dat.c_offset);
-				dat.bin_wrong     = br.ReadBytes(dat.s1_offset - dat.w_offset);
-				dat.bin_solution1 = br.ReadBytes(dat.s2_offset - dat.s1_offset);
-				dat.bin_solution2 = br.ReadBytes(dat.s3_offset - dat.s2_offset);
-				dat.bin_solution3 = br.ReadBytes(file_size - dat.s3_offset);
-				dat.question      = Encoding.UTF8.GetString(dat.bin_question).Replace("\0", string.Empty);
-				dat.correct       = Encoding.UTF8.GetString(dat.bin_correct).Replace("\0", string.Empty);
-				dat.wrong         = Encoding.UTF8.GetString(dat.bin_wrong).Replace("\0", string.Empty);
-				dat.solution1     = Encoding.UTF8.GetString(dat.bin_solution1).Replace("\0", string.Empty);
-				dat.solution2     = Encoding.UTF8.GetString(dat.bin_solution2).Replace("\0", string.Empty);
-				dat.solution3     = Encoding.UTF8.GetString(dat.bin_solution3).Replace("\0", string.Empty);
-
-				br.Close();
-				fs.Close();
-
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_title.txt", dat.title);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_question.txt", dat.question);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_correct.txt", dat.correct);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_wrong.txt", dat.wrong);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution1.txt", dat.solution1);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution2.txt", dat.solution2);
-				File.WriteAllText(fs.Name.Remove(fs.Name.Length - 4, 4) + "_solution3.txt", dat.solution3);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_title.txt", dat.title);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_question.txt", dat.question);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_correct.txt", dat.correct);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_wrong.txt", dat.wrong);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_solution1.txt", dat.solution1);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_solution2.txt", dat.solution2);
+				File.WriteAllText(fi.FullName.Remove(fi.FullName.Length - 4, 4) + "_solution3.txt", dat.solution3);
 
 				return 1;
 			}
