@@ -252,8 +252,10 @@ namespace LaytonScriptTool
 				Console.WriteLine ("How to use:");
 				Console.WriteLine ("{0} export <script_file_name> - for export", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine ("{0} export datfile <script_file_name> - for export dat files", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine ("{0} export datfile NDS <script_file_name> - for export dat files for nintendo DS", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine ("{0} import <script_file_name> <txt_file_name> - for import", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine("{0} import datfile <script_file_name> - for import dat files (WARNING! Text files must be near with dat-file)", AppDomain.CurrentDomain.FriendlyName);
+				Console.WriteLine("{0} import datfile NDS <script_file_name> - for import dat files for Nintendo DS (WARNING! Text files must be near with dat-file)", AppDomain.CurrentDomain.FriendlyName);
 				Console.WriteLine ("{0} replace <original_path> <translated_path> <needed_file.txt> - for replace strings", AppDomain.CurrentDomain.FriendlyName);
 			}
 		}
