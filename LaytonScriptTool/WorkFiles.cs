@@ -50,19 +50,30 @@ namespace LaytonScriptTool
 			return tmp;
 		}
 
-		public static int ImportFile(string InFileName, string InTxtFileName, string OutFileName)
+		public static int ImportFile(string InFileName, string InTxtFileName, string OutFileName, bool ascii, bool needReplaceNewLine)
 		{
 			try
 			{
 				if(!File.Exists(InFileName) || !File.Exists(InTxtFileName)) return -2;
 
-				List<ClassesAndStructs.QuestTitle> Data = new List<ClassesAndStructs.QuestTitle>();
-
-				Data = GetData(InFileName, false);
+				List<ClassesAndStructs.QuestTitle> Data = GetData(InFileName, ascii);
 				if(Data != null)
 				{
+					string[] new_strs = File.ReadAllLines(InTxtFileName, Encoding.UTF8);
 
-				string[] new_strs = File.ReadAllLines(InTxtFileName, Encoding.UTF8);
+					if(needReplaceNewLine) {
+						string tmpStr = "";
+
+						for(int i = 0; i < new_strs.Length; i++)
+						{
+							tmpStr += new_strs[i];
+							if (i + 1 < new_strs.Length) tmpStr += "\n";
+						}
+
+
+						new_strs = new string[1];
+						new_strs[0] = tmpStr;
+					}
 
 					int size;
 					byte[] tmp;
@@ -75,14 +86,14 @@ namespace LaytonScriptTool
 					tmp = new byte[4];
 					ms.Write(tmp, 0, tmp.Length);
 
-						int i = 0;
+					int i = 0;
 
 					while(i < new_strs.Length)
 					{
 						Data[i].Str = new_strs[i] + "\0";
-							if(Data[i].Str.Contains("\\n")) Data[i].Str = Data[i].Str.Replace("\\n", "\n");
-							else if(Data[i].Str.Contains("/n")) Data[i].Str = Data[i].Str.Replace("/n", "\n");
-						tmp = Encoding.UTF8.GetBytes(Data[i].Str);
+						if(Data[i].Str.Contains("\\n")) Data[i].Str = Data[i].Str.Replace("\\n", "\n");
+						else if(Data[i].Str.Contains("/n")) Data[i].Str = Data[i].Str.Replace("/n", "\n");
+						tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(Data[i].Str) : Encoding.UTF8.GetBytes(Data[i].Str);
 						Data[i].Str_size = (short)tmp.Length;
 
 						size += 4 + Data[i].Str_size;
@@ -91,8 +102,47 @@ namespace LaytonScriptTool
 						ms.Write(tmp, 0, tmp.Length);
 						tmp = BitConverter.GetBytes(Data[i].Unknown2);
 						ms.Write(tmp, 0, tmp.Length);
+						
+							if(Data[i].Unknown2 != 0xCA && Data[i].Unknown2 != 0xCB && Data[i].Unknown2 != 0xBC && Data[i].Unknown2 != 0xBD)
+							{
+								size -= Data[i].Str_size; // NEED RECALCULATE!
+								string[] tmpStrs = Data[i].Str.Split('|');
+								size += 6;
+								tmp = BitConverter.GetBytes(Data[i].Unknown3);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = BitConverter.GetBytes(Data[i].Unknown4);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(tmpStrs[1] + "\0") : Encoding.UTF8.GetBytes(tmpStrs[1] + "\0");
+								Data[i].Unknown5 = (short)tmp.Length;
+								tmp = BitConverter.GetBytes(Data[i].Unknown5);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(tmpStrs[1] + "\0") : Encoding.UTF8.GetBytes(tmpStrs[1] + "\0");
+								ms.Write(tmp, 0, tmp.Length);
+								size += tmp.Length;
 
-							if(Data[i].Unknown2 != 0xCA && Data[i].Unknown2 != 0xCB)
+								tmp = BitConverter.GetBytes(Data[i].Unknown6);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(tmpStrs[2] + "\0") : Encoding.UTF8.GetBytes(tmpStrs[2] + "\0");
+								Data[i].Unknown7 = (short)tmp.Length;
+								tmp = BitConverter.GetBytes(Data[i].Unknown7);
+								ms.Write(tmp, 0, tmp.Length);
+								size += 2 + Data[i].Unknown7;
+								tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(tmpStrs[2] + "\0") : Encoding.UTF8.GetBytes(tmpStrs[2] + "\0");
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = BitConverter.GetBytes(Data[i].Unknown8);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = BitConverter.GetBytes(Data[i].Unknown9);
+								ms.Write(tmp, 0, tmp.Length);
+								tmp = BitConverter.GetBytes(Data[i].Unknown10);
+								ms.Write(tmp, 0, tmp.Length);
+								size += 6;
+								if(tmpStrs[4].Contains("\n") && ascii) tmpStrs[4] = tmpStrs[4].Replace("\n", "@B");
+								tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(tmpStrs[4]) : Encoding.UTF8.GetBytes(tmpStrs[4]);
+								Data[i].Str_size = (short)tmp.Length;
+								Data[i].Str = tmpStrs[4];
+								size += Data[i].Str_size;
+							}
+							else if(Data[i].Unknown2 != 0xCA && Data[i].Unknown2 != 0xCB || Data[i].Unknown2 == 0xBC || Data[i].Unknown2 == 0xBD)
 							{
 								tmp = BitConverter.GetBytes(Data[i].Unknown3);
 								ms.Write(tmp, 0, tmp.Length);
@@ -164,7 +214,7 @@ namespace LaytonScriptTool
 							ms.Write(tmp, 0, tmp.Length);
 							tmp = BitConverter.GetBytes(Data[i].Str_size);
 							ms.Write(tmp, 0, tmp.Length);
-							tmp = Encoding.UTF8.GetBytes(Data[i].Str);
+							tmp = ascii ? Encoding.GetEncoding(1251).GetBytes(Data[i].Str) : Encoding.UTF8.GetBytes(Data[i].Str);
 							ms.Write(tmp, 0, tmp.Length);
 
 							size += 4;
@@ -286,6 +336,7 @@ namespace LaytonScriptTool
 			try
 			{
 				int size; // Get a size file
+
 				size = br.ReadInt32();
 
 				List<ClassesAndStructs.QuestTitle> qt = new List<ClassesAndStructs.QuestTitle>();
@@ -293,7 +344,8 @@ namespace LaytonScriptTool
 				int check_sz = 0;
 
 				byte[] tmp;
-
+				bool needAddTmpStr = false;
+				string tmpStr = "";
 				int i = 0;
 
 				while (check_sz + 2 != size) 
@@ -302,7 +354,34 @@ namespace LaytonScriptTool
 					qt.Add(new ClassesAndStructs.QuestTitle(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, ""));
 					qt[i].Unknown1 = br.ReadInt16();
 					qt[i].Unknown2 = br.ReadInt16();
-					if(qt[i].Unknown2 != 0xCA && qt[i].Unknown2 != 0xCB)
+
+					if(qt[i].Unknown2 != 0xCA && qt[i].Unknown2 != 0xCB && qt[i].Unknown2 != 0xBC && qt[i].Unknown2 != 0xBD)
+					{
+						//Probaly this a gds file for subtitles
+						//Try make it like in Android: (e.g. 1|b2 normal|NONE|<actor's string>)
+						needAddTmpStr = true;
+						qt[i].Unknown3 = br.ReadInt16();
+						qt[i].Unknown4 = br.ReadInt16();
+						qt[i].Unknown5 = br.ReadInt16();
+						check_sz += 6 + (int)qt[i].Unknown5;
+						tmpStr = Convert.ToString(qt[i].Unknown2) + "|";
+						tmp = br.ReadBytes(qt[i].Unknown5);
+						string tmpSubString = ascii ? Encoding.GetEncoding(1251).GetString(tmp) : Encoding.UTF8.GetString(tmp);
+						tmpSubString = tmpSubString.Remove(tmpSubString.Length - 1, 1);
+						tmpStr += tmpSubString + "|";
+						qt[i].Unknown6 = br.ReadInt16();
+						qt[i].Unknown7 = br.ReadInt16();
+						tmp = br.ReadBytes(qt[i].Unknown7);
+						check_sz += 2 + qt[i].Unknown7;
+						tmpSubString = ascii ? Encoding.GetEncoding(1251).GetString(tmp) : Encoding.UTF8.GetString(tmp);
+						tmpSubString = tmpSubString.Remove(tmpSubString.Length - 1, 1);
+						tmpStr += tmpSubString + "|";
+						qt[i].Unknown8 = br.ReadInt16();
+						qt[i].Unknown9 = br.ReadInt16();
+						qt[i].Unknown10 = br.ReadInt16();
+						check_sz += 6;
+					}
+					else if(qt[i].Unknown2 != 0xCA && qt[i].Unknown2 != 0xCB || qt[i].Unknown2 == 0xBC || qt[i].Unknown2 == 0xBD)
 					{
 						qt[i].Unknown3 = br.ReadInt16();
 						qt[i].Unknown4 = br.ReadInt16();
@@ -342,9 +421,19 @@ namespace LaytonScriptTool
 					qt[i].Unknown32 = br.ReadInt16();
 					qt[i].Str_size = br.ReadInt16();
 					tmp = br.ReadBytes(qt[i].Str_size);
-					qt[i].Str = Encoding.UTF8.GetString(tmp);
-					if(ascii) qt[i].Str = Encoding.ASCII.GetString(tmp);
-					qt[i].Str = qt[i].Str.Remove(qt[i].Str.Length - 1, 1);
+					if(!needAddTmpStr)
+					{
+						qt[i].Str = ascii ? qt[i].Str = Encoding.ASCII.GetString(tmp) : Encoding.UTF8.GetString(tmp);
+						qt[i].Str = qt[i].Str.Remove(qt[i].Str.Length - 1, 1);
+					}
+					else 
+					{
+						string tmpSubStr = ascii ? Encoding.GetEncoding(1251).GetString(tmp) : Encoding.UTF8.GetString(tmp);
+						tmpSubStr = tmpSubStr.Remove(tmpSubStr.Length - 1, 1);
+						if(tmpSubStr.Contains("@B")) tmpSubStr = tmpSubStr.Replace("@B", "\n");
+						tmpStr += tmpSubStr;
+						qt[i].Str = tmpStr;
+					}
 					if(qt[i].Str.Contains("\n")) qt[i].Str = qt[i].Str.Replace("\n", "\\n");
 					if(qt[i].Unknown2 == 0xCA || qt[i].Unknown2 == 0xCB)
 					{

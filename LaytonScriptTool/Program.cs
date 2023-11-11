@@ -6,9 +6,10 @@ namespace LaytonScriptTool
 	{
 		public static void Main (string[] args)
 		{
-			if (args.Length == 2 && args [0] == "export") {
-				string InputFile = args [1];
-				string OutputFile = WorkFiles.ReplaceFileName (args [1], ".txt");
+			if ((args.Length == 2 && args [0] == "export") || (args.Length == 3 && args[0] == "export" && args[1] == "NDS")) {
+				bool ascii = (args.Length == 3) && (args[1] == "NDS");
+				string InputFile = args.Length == 2 ? args [1] : args[2];
+				string OutputFile = WorkFiles.ReplaceFileName (InputFile, ".txt");
 
 				if (OutputFile != null) {
 					int result = WorkFiles.ExportFile (InputFile, OutputFile, false, false);
@@ -171,15 +172,22 @@ namespace LaytonScriptTool
                 }
                 else Console.WriteLine("You need have {0}_title.txt and {0}_question.txt file", FileName);
 
-            } else if ((args.Length == 3 || args.Length == 4) && (args [0] == "import")) {
-				string InputFile = args [1];
-				string InputTxtFile = args [2];
-				string OutputFile = args [1];
-				if (args.Length == 4)
-					OutputFile = args [3];
+			} else if (((args.Length == 3 || args.Length == 4) && (args [0] == "import" && args[1] != "NDS"))
+				|| ((args.Length == 4 || args.Length == 5) && args[0] == "import" && args[1] == "NDS")
+				|| ((args.Length == 5 || args.Length == 6 && args[0] == "import" && (args[1] == "NDS" || args[1] == "RNL") && (args[args.Length - 1] == "NDS" || args[args.Length - 1] == "RNL"))))
+			{
+					bool ascii = (args.Length == 4 || args.Length == 5) && args[1] == "NDS";
+				bool replaceNewLines = (args.Length == 5 || args.Length == 6) && (args [1] == "RNL" || args [args.Length - 1] == "RNL");
 
-				if (OutputFile != null) {
-					int result = WorkFiles.ImportFile (InputFile, InputTxtFile, OutputFile);
+				string InputFile = args[1] != "NDS" && args[1] != "RNL" ? args [1] : args [2];
+				string InputTxtFile = args[1] != "NDS" && args[1] != "RNL" ? args [2] : args[3];
+				string OutputFile = args[1] != "NDS" && args[1] != "RNL" ? args [1] : args [2];
+
+				if (args.Length == 4 && args[1] != "NDS") OutputFile = args [3];
+
+				if (OutputFile != null) 
+				{
+					int result = WorkFiles.ImportFile (InputFile, InputTxtFile, OutputFile, ascii, replaceNewLines);
 
 					switch (result) {
 					case -2:
@@ -200,8 +208,10 @@ namespace LaytonScriptTool
 					}
 				} else
 					Console.WriteLine ("Error for make import file name.");
+					
 			} else if ((args.Length == 4) && (args [0] == "replace") && (System.IO.Directory.Exists (args [1]) && System.IO.Directory.Exists (args [2]))
-			           && System.IO.File.Exists (args [3])) {
+			           && System.IO.File.Exists (args [3]))
+			{
 				string DirectoryOriginal = args [1];
 				string DirectoryTranslate = args [2];
 				string FullFile = args [3];
@@ -224,7 +234,8 @@ namespace LaytonScriptTool
 					Console.WriteLine ("File successfully modified.");
 					break;
 				}
-			} else if (args.Length == 2 && args [0] == "debug") {
+			} else if (args.Length == 2 && args [0] == "debug")
+			{
 				string InputFile = args [1];
 				string OutputFile = WorkFiles.ReplaceFileName (args[1], ".txt");
 
